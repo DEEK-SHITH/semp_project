@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Dashboard - Smart Timetable</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="top">
+    <h1>👨‍🏫 Faculty Dashboard</h1>
+    <p>Manage your teaching schedule and academic activities</p>
+    <div class="user-info">
+      <span id="facultyName">Loading...</span>
+      <button onclick="logout()" class="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Faculty Profile -->
+    <div class="panel faculty-profile">
+      <h2>👤 Faculty Profile</h2>
+      <div class="profile-grid">
+        <div class="profile-item">
+          <label>Faculty ID:</label>
+          <span id="profileFacultyId">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Name:</label>
+          <span id="profileName">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Department:</label>
+          <span id="profileDepartment">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Designation:</label>
+          <span id="profileDesignation">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Email:</label>
+          <span id="profileEmail">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Specialization:</label>
+          <span id="profileSpecialization">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teaching Statistics -->
+    <div class="panel teaching-stats">
+      <h2>📊 Teaching Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-number" id="totalCourses">0</span>
+          <span class="stat-label">Courses</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="weeklyHours">0</span>
+          <span class="stat-label">Hours/Week</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="studentGroups">0</span>
+          <span class="stat-label">Student Groups</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="labSessions">0</span>
+          <span class="stat-label">Lab Sessions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teaching Schedule -->
+    <div class="panel wide faculty-schedule">
+      <div class="schedule-header">
+        <h2>📅 Teaching Schedule</h2>
+        <div class="schedule-controls">
+          <div class="filter-group">
+            <label for="viewType">View:</label>
+            <select id="viewType" onchange="loadFacultySchedule()">
+              <option value="weekly">Weekly View</option>
+              <option value="daily">Daily View</option>
+            </select>
+          </div>
+          <button onclick="loadFacultySchedule()" class="load-btn">
+            🔄 Refresh Schedule
+          </button>
+        </div>
+      </div>
+      
+      <div id="facultySchedule" class="schedule-content">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading teaching schedule...</p>
+        </div>
+      </div>
+      
+      <div class="schedule-actions">
+        <button onclick="exportFacultySchedule()" class="action-btn">
+          📥 Export Schedule
+        </button>
+        <button onclick="requestScheduleChange()" class="action-btn">
+          ✏️ Request Changes
+        </button>
+        <button onclick="viewTeachingLoad()" class="action-btn">
+          📊 Teaching Load
+        </button>
+      </div>
+    </div>
+
+    <!-- Assigned Courses -->
+    <div class="panel assigned-courses">
+      <h2>📚 Assigned Courses</h2>
+      <div id="assignedCourses" class="courses-list">
+        <!-- Courses will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Student Groups -->
+    <div class="panel student-groups">
+      <h2>👥 Student Groups</h2>
+      <div id="studentGroups" class="groups-list">
+        <!-- Student groups will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Upcoming Deadlines -->
+    <div class="panel deadlines">
+      <h2>⏰ Upcoming Deadlines</h2>
+      <div class="deadlines-list">
+        <div class="deadline-item">
+          <div class="deadline-date">Nov 18</div>
+          <div class="deadline-details">
+            <div class="deadline-title">DBMS Assignment 3 Submission</div>
+            <div class="deadline-course">CSE501 - Group A1, A2</div>
+          </div>
+        </div>
+        <div class="deadline-item">
+          <div class="deadline-date">Nov 22</div>
+          <div class="deadline-details">
+            <div class="deadline-title">AJava Lab Evaluation</div>
+            <div class="deadline-course">CSE502L - All Groups</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authManager } from './auth.js';
+
+    let currentFacultySchedule = null;
+    let userData = null;
+
+    // Authentication check with persistent session
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('Faculty dashboard loaded');
+      
+      // Check authentication for faculty role
+      if (!authManager.requireAuth('faculty')) {
+        return;
+      }
+
+      console.log('Faculty authentication successful');
+      
+      // Load user data from localStorage (persistent)
+      userData = JSON.parse(localStorage.getItem('userData'));
+      if (!userData) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Load all faculty data
+      await loadFacultyData();
+    });
+
+    async function loadFacultyData() {
+      // Load faculty profile
+      loadFacultyProfile();
+      
+      // Load schedule and courses
+      await loadFacultySchedule();
+      await loadAssignedCourses();
+      await loadStudentGroups();
+    }
+
+    function loadFacultyProfile() {
+      document.getElementById('facultyName').textContent = `Welcome, ${userData.firstName} ${userData.lastName}`;
+      document.getElementById('profileFacultyId').textContent = userData.facultyId || 'FAC001';
+      document.getElementById('profileName').textContent = `${userData.firstName} ${userData.lastName}`;
+      document.getElementById('profileDepartment').textContent = userData.department;
+      document.getElementById('profileDesignation').textContent = userData.designation || 'Assistant Professor';
+      document.getElementById('profileEmail').textContent = userData.email;
+      document.getElementById('profileSpecialization').textContent = userData.specialization || 'Computer Science';
+    }
+
+    function loadFacultySchedule() {
+      const viewType = document.getElementById('viewType').value;
+      
+      document.getElementById('facultySchedule').innerHTML = `
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading teaching schedule...</p>
+        </div>
+      `;
+      
+      // Simulate API call
+      setTimeout(() => {
+        currentFacultySchedule = generateFacultySchedule(userData);
+        renderFacultySchedule(currentFacultySchedule, viewType);
+        updateFacultyStats(currentFacultySchedule);
+      }, 1000);
+    }
+
+    function generateFacultySchedule(facultyData) {
+      // Generate schedule based on faculty data
+      const facultyName = `${facultyData.firstName} ${facultyData.lastName}`;
+      
+      return {
+        facultyId: facultyData.facultyId,
+        name: facultyName,
+        department: facultyData.department,
+        courses: ["DBMS", "DBMS Lab", "Advanced Java"],
+        schedule: {
+          "Monday": [
+            { time: "9:00-10:00", course: "DBMS", group: "5th A", room: "Room 201", type: "Theory", students: 60 },
+            { time: "11:30-1:30", course: "DBMS Lab", group: "A1", room: "CS Lab A1", type: "Lab", students: 30 }
+          ],
+          "Tuesday": [
+            { time: "10:00-11:00", course: "DBMS", group: "5th A", room: "Room 202", type: "Theory", students: 60 },
+            { time: "2:00-4:00", course: "Advanced Java", group: "5th B", room: "Room 205", type: "Theory", students: 60 }
+          ],
+          "Wednesday": [
+            { time: "9:00-11:00", course: "DBMS Lab", group: "A2", room: "CS Lab A1", type: "Lab", students: 30 }
+          ],
+          "Thursday": [
+            { time: "11:30-1:30", course: "Advanced Java Lab", group: "B1", room: "Lab 302", type: "Lab", students: 30 }
+          ],
+          "Friday": [
+            { time: "10:00-11:00", course: "DBMS", group: "5th A", room: "Room 201", type: "Theory", students: 60 }
+          ]
+        }
+      };
+    }
+
+    function renderFacultySchedule(schedule, viewType = 'weekly') {
+      const container = document.getElementById('facultySchedule');
+      
+      if (viewType === 'weekly') {
+        container.innerHTML = renderWeeklySchedule(schedule);
+      } else {
+        container.innerHTML = renderDailySchedule(schedule);
+      }
+    }
+
+    function renderWeeklySchedule(schedule) {
+      let html = `<div class="faculty-schedule-view">
+        <div class="faculty-info-card">
+          <h3>${schedule.name}</h3>
+          <p>Department: ${schedule.department} | Courses: ${schedule.courses.join(', ')}</p>
+        </div>
+        
+        <div class="schedule-grid">`;
+      
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+      days.forEach(day => {
+        const classes = schedule.schedule[day] || [];
+        
+        html += `<div class="schedule-day">
+          <h4>${day}</h4>`;
+        
+        if (classes.length === 0) {
+          html += '<div class="no-class">No teaching assignments</div>';
+        } else {
+          classes.forEach(cls => {
+            html += `<div class="teaching-slot ${cls.type.toLowerCase()}">
+              <div class="slot-time">${cls.time}</div>
+              <div class="slot-details">
+                <div class="course-name">${cls.course}</div>
+                <div class="class-info">
+                  <span class="group">👥 ${cls.group} (${cls.students} students)</span>
+                  <span class="room">🏫 ${cls.room}</span>
+                  <span class="session-type">${cls.type}</span>
+                </div>
+              </div>
+            </div>`;
+          });
+        }
+        html += '</div>';
+      });
+      
+      html += `</div></div>`;
+      return html;
+    }
+
+    function renderDailySchedule(schedule) {
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      const classes = schedule.schedule[today] || [];
+      
+      let html = `<div class="daily-schedule-view">
+        <div class="daily-header">
+          <h3>Today's Schedule - ${today}</h3>
+          <p>${schedule.name} | ${schedule.department}</p>
+        </div>`;
+      
+      if (classes.length === 0) {
+        html += '<div class="no-class-today">No classes scheduled for today</div>';
+      } else {
+        classes.forEach(cls => {
+          html += `<div class="daily-slot ${cls.type.toLowerCase()}">
+            <div class="time-badge">${cls.time}</div>
+            <div class="slot-content">
+              <div class="main-course">${cls.course}</div>
+              <div class="slot-meta">
+                <span class="meta-item">👥 ${cls.group}</span>
+                <span class="meta-item">🏫 ${cls.room}</span>
+                <span class="meta-item">📚 ${cls.type}</span>
+                <span class="meta-item">👨‍🎓 ${cls.students} students</span>
+              </div>
+            </div>
+          </div>`;
+        });
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    function updateFacultyStats(schedule) {
+      let totalCourses = new Set();
+      let weeklyHours = 0;
+      let studentGroups = new Set();
+      let labSessions = 0;
+      
+      Object.values(schedule.schedule).forEach(classes => {
+        classes.forEach(cls => {
+          totalCourses.add(cls.course);
+          studentGroups.add(cls.group);
+          
+          if (cls.type === 'Lab') labSessions++;
+          
+          // Calculate hours
+          const timeRange = cls.time.split('-');
+          const start = parseFloat(timeRange[0]);
+          const end = parseFloat(timeRange[1].split(':')[0]);
+          weeklyHours += (end - start);
+        });
+      });
+      
+      document.getElementById('totalCourses').textContent = totalCourses.size;
+      document.getElementById('weeklyHours').textContent = weeklyHours;
+      document.getElementById('studentGroups').textContent = studentGroups.size;
+      document.getElementById('labSessions').textContent = labSessions;
+    }
+
+    async function loadAssignedCourses() {
+      try {
+        const courses = [
+          { code: "CSE501", name: "Database Management Systems", type: "Theory+Lab", credits: 4, students: 120 },
+          { code: "CSE501L", name: "DBMS Laboratory", type: "Lab", credits: 2, students: 60 },
+          { code: "CSE502", name: "Advanced Java Programming", type: "Theory", credits: 3, students: 60 }
+        ];
+
+        const container = document.getElementById('assignedCourses');
+        container.innerHTML = courses.map(course => `
+          <div class="course-assignment">
+            <div class="course-header">
+              <span class="course-code">${course.code}</span>
+              <span class="course-type">${course.type}</span>
+            </div>
+            <div class="course-name">${course.name}</div>
+            <div class="course-stats">
+              <span class="stat">${course.credits} Credits</span>
+              <span class="stat">👨‍🎓 ${course.students} Students</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading assigned courses:', error);
+      }
+    }
+
+    async function loadStudentGroups() {
+      try {
+        const groups = [
+          { name: "5th Semester A", strength: 60, courses: ["DBMS", "AJava"] },
+          { name: "5th Semester B", strength: 60, courses: ["Advanced Java"] },
+          { name: "Lab Group A1", strength: 30, courses: ["DBMS Lab"] },
+          { name: "Lab Group A2", strength: 30, courses: ["DBMS Lab"] },
+          { name: "Lab Group B1", strength: 30, courses: ["AJava Lab"] }
+        ];
+
+        const container = document.getElementById('studentGroups');
+        container.innerHTML = groups.map(group => `
+          <div class="student-group">
+            <div class="group-name">${group.name}</div>
+            <div class="group-details">
+              <span class="group-strength">👥 ${group.strength} students</span>
+              <div class="group-courses">${group.courses.join(', ')}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading student groups:', error);
+      }
+    }
+
+    function exportFacultySchedule() {
+      if (!currentFacultySchedule) {
+        alert('Please load schedule first');
+        return;
+      }
+      const scheduleText = JSON.stringify(currentFacultySchedule, null, 2);
+      const blob = new Blob([scheduleText], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'faculty-schedule.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function requestScheduleChange() {
+      alert('Schedule change request feature would open a form here');
+    }
+
+    function viewTeachingLoad() {
+      alert('Teaching load analytics would be displayed in a modal');
+    }
+
+    // Make functions globally available
+    window.loadFacultySchedule = loadFacultySchedule;
+    window.exportFacultySchedule = exportFacultySchedule;
+    window.requestScheduleChange = requestScheduleChange;
+    window.viewTeachingLoad = viewTeachingLoad;
+  </script>
+</body>
+</html>

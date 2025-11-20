@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Smart Timetable</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="top">
+    <h1>⚙️ Admin Dashboard</h1>
+    <p>Manage timetables, courses, teachers, and system configuration</p>
+    <div class="user-info">
+      <span id="adminName">Loading...</span>
+      <button onclick="logout()" class="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container admin-container">
+    <!-- Admin Sidebar -->
+    <div class="admin-sidebar">
+      <div class="sidebar-header">
+        <h3>Navigation</h3>
+      </div>
+      <div class="sidebar-menu">
+        <button class="menu-item active" onclick="showSection('dashboard')">
+          📊 Dashboard
+        </button>
+        <button class="menu-item" onclick="showSection('timetable-gen')">
+          🎯 Timetable Generation
+        </button>
+        <button class="menu-item" onclick="showSection('course-mgmt')">
+          📚 Course Management
+        </button>
+        <button class="menu-item" onclick="showSection('faculty-mgmt')">
+          👨‍🏫 Faculty Management
+        </button>
+        <button class="menu-item" onclick="showSection('room-mgmt')">
+          🏫 Room Management
+        </button>
+        <button class="menu-item" onclick="showSection('reports')">
+          📈 Reports & Analytics
+        </button>
+        <button class="menu-item" onclick="showSection('settings')">
+          ⚙️ System Settings
+        </button>
+      </div>
+      
+      <!-- Quick Stats -->
+      <div class="sidebar-stats">
+        <div class="stat-item">
+          <span class="stat-number" id="totalCourses">0</span>
+          <span class="stat-label">Courses</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="totalFaculty">0</span>
+          <span class="stat-label">Faculty</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="totalRooms">0</span>
+          <span class="stat-label">Rooms</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Content -->
+    <div class="admin-content">
+      <!-- Dashboard Section -->
+      <div id="dashboard" class="content-section active">
+        <div class="section-header">
+          <h2>📊 Admin Dashboard</h2>
+          <p>Welcome back! Here's your system overview</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card primary">
+            <div class="stat-icon">📚</div>
+            <div class="stat-content">
+              <span class="stat-number" id="dashboardCourses">0</span>
+              <span class="stat-label">Total Courses</span>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon">👨‍🏫</div>
+            <div class="stat-content">
+              <span class="stat-number" id="dashboardFaculty">0</span>
+              <span class="stat-label">Faculty Members</span>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon">🏫</div>
+            <div class="stat-content">
+              <span class="stat-number" id="dashboardRooms">0</span>
+              <span class="stat-label">Rooms</span>
+            </div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-content">
+              <span class="stat-number" id="dashboardTimetables">0</span>
+              <span class="stat-label">Active Timetables</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-panel">
+          <h3>🚀 Quick Actions</h3>
+          <div class="action-grid">
+            <button class="action-card" onclick="showSection('timetable-gen')">
+              <div class="action-icon">🎯</div>
+              <div class="action-text">
+                <h4>Generate Timetable</h4>
+                <p>Create new timetable automatically</p>
+              </div>
+            </button>
+            <button class="action-card" onclick="showAddCourseModal()">
+              <div class="action-icon">📚</div>
+              <div class="action-text">
+                <h4>Add Course</h4>
+                <p>Create new course</p>
+              </div>
+            </button>
+            <button class="action-card" onclick="showAddFacultyModal()">
+              <div class="action-icon">👨‍🏫</div>
+              <div class="action-text">
+                <h4>Add Faculty</h4>
+                <p>Register new faculty member</p>
+              </div>
+            </button>
+            <button class="action-card" onclick="showAddRoomModal()">
+              <div class="action-icon">🏫</div>
+              <div class="action-text">
+                <h4>Add Room</h4>
+                <p>Register new classroom/lab</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+          <h3>📋 Recent Activity</h3>
+          <div class="activity-list" id="recentActivityList">
+            <!-- Activity items will be loaded here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Timetable Generation Section -->
+      <div id="timetable-gen" class="content-section">
+        <div class="section-header">
+          <h2>🎯 Smart Timetable Generation</h2>
+          <p>Automatically generate conflict-free timetables based on constraints</p>
+        </div>
+
+        <div class="generation-wizard">
+          <!-- Step 1: Configuration -->
+          <div class="wizard-step active" id="step1">
+            <h3>1. Configuration</h3>
+            <div class="config-grid">
+              <div class="config-group">
+                <label for="academicYear">Academic Year *</label>
+                <input type="text" id="academicYear" placeholder="e.g., 2024-25" required>
+              </div>
+              <div class="config-group">
+                <label for="semesterSelect">Semester *</label>
+                <select id="semesterSelect" required>
+                  <option value="">Select Semester</option>
+                  <option value="1">Semester 1</option>
+                  <option value="2">Semester 2</option>
+                  <option value="3">Semester 3</option>
+                  <option value="4">Semester 4</option>
+                  <option value="5">Semester 5</option>
+                  <option value="6">Semester 6</option>
+                  <option value="7">Semester 7</option>
+                  <option value="8">Semester 8</option>
+                </select>
+              </div>
+              <div class="config-group">
+                <label for="departmentSelect">Department *</label>
+                <select id="departmentSelect" required>
+                  <option value="">Select Department</option>
+                  <option value="CSE">Computer Science & Engineering</option>
+                  <option value="ECE">Electronics & Communication</option>
+                  <option value="ME">Mechanical Engineering</option>
+                  <option value="CE">Civil Engineering</option>
+                </select>
+              </div>
+            </div>
+            <button class="wizard-next" onclick="nextStep(2)">Next →</button>
+          </div>
+
+          <!-- Step 2: Constraints -->
+          <div class="wizard-step" id="step2">
+            <h3>2. Set Constraints</h3>
+            <div class="constraints-grid">
+              <div class="constraint-item">
+                <label>Max Classes Per Day:</label>
+                <input type="number" id="maxClasses" value="6" min="4" max="8">
+              </div>
+              <div class="constraint-item">
+                <label>Lab Duration (hours):</label>
+                <input type="number" id="labDuration" value="2" min="2" max="3">
+              </div>
+              <div class="constraint-item">
+                <label>Lunch Break:</label>
+                <select id="lunchBreak">
+                  <option value="60">1 hour (12:00-1:00)</option>
+                  <option value="45">45 minutes</option>
+                  <option value="30">30 minutes</option>
+                </select>
+              </div>
+            </div>
+            <div class="wizard-actions">
+              <button class="wizard-prev" onclick="prevStep(1)">← Previous</button>
+              <button class="wizard-next" onclick="nextStep(3)">Next →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Generate -->
+          <div class="wizard-step" id="step3">
+            <h3>3. Generate Timetable</h3>
+            <div class="generate-options">
+              <button class="generate-btn primary" onclick="generateTimetable()">
+                🚀 Generate Timetable
+              </button>
+              <button class="generate-btn secondary" onclick="loadExistingData()">
+                📥 Load Existing Data
+              </button>
+            </div>
+            <div class="wizard-actions">
+              <button class="wizard-prev" onclick="prevStep(2)">← Previous</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+          <div class="results-header">
+            <h3>Generated Timetable</h3>
+            <div class="result-actions">
+              <button class="action-btn success" onclick="exportTimetable()">📥 Export JSON</button>
+              <button class="action-btn primary" onclick="saveTimetable()">💾 Save to Database</button>
+              <button class="action-btn warning" onclick="publishTimetable()">🌐 Publish</button>
+            </div>
+          </div>
+          <div id="timetableResults" class="timetable-results">
+            <!-- Timetable will be rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Course Management Section -->
+      <div id="course-mgmt" class="content-section">
+        <div class="section-header">
+          <h2>📚 Course Management</h2>
+          <p>Manage all courses and their details</p>
+        </div>
+
+        <div class="management-panel">
+          <div class="toolbar">
+            <button class="action-btn primary" onclick="showAddCourseModal()">
+              ➕ Add New Course
+            </button>
+            <button class="action-btn secondary" onclick="importCourses()">
+              📥 Import Courses
+            </button>
+            <button class="action-btn success" onclick="exportCourses()">
+              📤 Export Courses
+            </button>
+            <div class="search-box">
+              <input type="text" id="courseSearch" placeholder="Search courses..." onkeyup="searchCourses()">
+              <span class="search-icon">🔍</span>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Course Name</th>
+                  <th>Teacher</th>
+                  <th>Credits</th>
+                  <th>Type</th>
+                  <th>Department</th>
+                  <th>Semester</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="coursesTable">
+                <!-- Courses will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Faculty Management Section -->
+      <div id="faculty-mgmt" class="content-section">
+        <div class="section-header">
+          <h2>👨‍🏫 Faculty Management</h2>
+          <p>Manage faculty members and their assignments</p>
+        </div>
+
+        <div class="management-panel">
+          <div class="toolbar">
+            <button class="action-btn primary" onclick="showAddFacultyModal()">
+              ➕ Add New Faculty
+            </button>
+            <button class="action-btn secondary" onclick="importFaculty()">
+              📥 Import Faculty
+            </button>
+            <button class="action-btn success" onclick="exportFaculty()">
+              📤 Export Faculty
+            </button>
+            <div class="search-box">
+              <input type="text" id="facultySearch" placeholder="Search faculty..." onkeyup="searchFaculty()">
+              <span class="search-icon">🔍</span>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Faculty ID</th>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Email</th>
+                  <th>Designation</th>
+                  <th>Specialization</th>
+                  <th>Experience</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="facultyTable">
+                <!-- Faculty will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room Management Section -->
+      <div id="room-mgmt" class="content-section">
+        <div class="section-header">
+          <h2>🏫 Room Management</h2>
+          <p>Manage classrooms, labs, and their facilities</p>
+        </div>
+
+        <div class="management-panel">
+          <div class="toolbar">
+            <button class="action-btn primary" onclick="showAddRoomModal()">
+              ➕ Add New Room
+            </button>
+            <button class="action-btn secondary" onclick="importRooms()">
+              📥 Import Rooms
+            </button>
+            <button class="action-btn success" onclick="exportRooms()">
+              📤 Export Rooms
+            </button>
+            <div class="search-box">
+              <input type="text" id="roomSearch" placeholder="Search rooms..." onkeyup="searchRooms()">
+              <span class="search-icon">🔍</span>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Room ID</th>
+                  <th>Room Name</th>
+                  <th>Type</th>
+                  <th>Capacity</th>
+                  <th>Department</th>
+                  <th>Facilities</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="roomsTable">
+                <!-- Rooms will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reports Section -->
+      <div id="reports" class="content-section">
+        <div class="section-header">
+          <h2>📈 Reports & Analytics</h2>
+          <p>System insights and performance metrics</p>
+        </div>
+
+        <div class="reports-grid">
+          <div class="report-card">
+            <h3>📊 Room Utilization</h3>
+            <div class="report-content">
+              <div class="chart-placeholder">
+                <p>Room utilization chart will be displayed here</p>
+              </div>
+            </div>
+          </div>
+          <div class="report-card">
+            <h3>👨‍🏫 Faculty Workload</h3>
+            <div class="report-content">
+              <div class="chart-placeholder">
+                <p>Faculty workload distribution will be displayed here</p>
+              </div>
+            </div>
+          </div>
+          <div class="report-card">
+            <h3>📚 Course Distribution</h3>
+            <div class="report-content">
+              <div class="chart-placeholder">
+                <p>Course distribution by department will be displayed here</p>
+              </div>
+            </div>
+          </div>
+          <div class="report-card">
+            <h3>⚡ System Statistics</h3>
+            <div class="report-content">
+              <div class="system-stats">
+                <div class="system-stat">
+                  <span class="stat-label">Total Courses:</span>
+                  <span class="stat-value" id="totalUsers">0</span>
+                </div>
+                <div class="system-stat">
+                  <span class="stat-label">Active Faculty:</span>
+                  <span class="stat-value" id="activeTimetables">0</span>
+                </div>
+                <div class="system-stat">
+                  <span class="stat-label">Available Rooms:</span>
+                  <span class="stat-value">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Section -->
+      <div id="settings" class="content-section">
+        <div class="section-header">
+          <h2>⚙️ System Settings</h2>
+          <p>Configure system preferences and defaults</p>
+        </div>
+
+        <div class="settings-panel">
+          <div class="setting-group">
+            <h3>Academic Settings</h3>
+            <div class="setting-item">
+              <label for="defaultAcademicYear">Default Academic Year</label>
+              <input type="text" id="defaultAcademicYear" value="2024-25">
+            </div>
+            <div class="setting-item">
+              <label for="maxClassesPerDay">Maximum Classes Per Day</label>
+              <input type="number" id="maxClassesPerDay" value="6" min="4" max="8">
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Time Settings</h3>
+            <div class="setting-item">
+              <label for="classStartTime">Class Start Time</label>
+              <input type="time" id="classStartTime" value="08:30">
+            </div>
+            <div class="setting-item">
+              <label for="classDuration">Class Duration (minutes)</label>
+              <input type="number" id="classDuration" value="60" min="45" max="120">
+            </div>
+          </div>
+
+          <div class="setting-actions">
+            <button class="action-btn primary" onclick="saveSettings()">💾 Save Settings</button>
+            <button class="action-btn secondary" onclick="resetSettings()">🔄 Reset to Defaults</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Course Modal -->
+  <div id="courseModal" class="modal" style="display: none;">
+    <div class="modal-content large scrollable">
+      <div class="modal-header">
+        <h3 id="courseModalTitle">➕ Add New Course</h3>
+        <button class="modal-close" onclick="hideModal('courseModal')">×</button>
+      </div>
+      <form id="courseForm">
+        <input type="hidden" id="courseId">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="courseCode">Course Code *</label>
+            <input type="text" id="courseCode" placeholder="e.g., 18CS53" required>
+            <div class="form-hint">Unique identifier for the course</div>
+          </div>
+          <div class="form-group">
+            <label for="courseName">Course Name *</label>
+            <input type="text" id="courseName" placeholder="e.g., Database Management Systems" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="courseCredits">Credits *</label>
+            <input type="number" id="courseCredits" min="1" max="5" value="3" required>
+            <div class="form-hint">1-5 credits</div>
+          </div>
+          <div class="form-group">
+            <label for="courseType">Course Type *</label>
+            <select id="courseType" required>
+              <option value="">Select Type</option>
+              <option value="theory">Theory</option>
+              <option value="lab">Lab</option>
+              <option value="project">Project</option>
+              <option value="seminar">Seminar</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="courseDepartment">Department *</label>
+            <select id="courseDepartment" required>
+              <option value="">Select Department</option>
+              <option value="CSE">Computer Science & Engineering</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="ME">Mechanical Engineering</option>
+              <option value="CE">Civil Engineering</option>
+              <option value="EE">Electrical Engineering</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="courseSemester">Semester *</label>
+            <select id="courseSemester" required>
+              <option value="">Select Semester</option>
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+              <option value="3">Semester 3</option>
+              <option value="4">Semester 4</option>
+              <option value="5">Semester 5</option>
+              <option value="6">Semester 6</option>
+              <option value="7">Semester 7</option>
+              <option value="8">Semester 8</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="courseDescription">Description</label>
+          <textarea id="courseDescription" placeholder="Course description, objectives, and learning outcomes..." rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="assignedFaculty">Assigned Faculty</label>
+          <select id="assignedFaculty">
+            <option value="">Select Faculty Member</option>
+            <!-- Faculty options will be populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="courseActive" checked>
+            Course Active
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="action-btn primary" id="courseSubmitBtn">💾 Add Course</button>
+          <button type="button" class="action-btn secondary" onclick="hideModal('courseModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add/Edit Faculty Modal -->
+  <div id="facultyModal" class="modal" style="display: none;">
+    <div class="modal-content large scrollable">
+      <div class="modal-header">
+        <h3 id="facultyModalTitle">👨‍🏫 Add New Faculty</h3>
+        <button class="modal-close" onclick="hideModal('facultyModal')">×</button>
+      </div>
+      <form id="facultyForm">
+        <input type="hidden" id="facultyId">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="facultyIdInput">Faculty ID *</label>
+            <input type="text" id="facultyIdInput" placeholder="e.g., FAC001" required>
+            <div class="form-hint">Unique identifier for faculty</div>
+          </div>
+          <div class="form-group">
+            <label for="facultyDepartment">Department *</label>
+            <select id="facultyDepartment" required>
+              <option value="">Select Department</option>
+              <option value="CSE">Computer Science & Engineering</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="ME">Mechanical Engineering</option>
+              <option value="CE">Civil Engineering</option>
+              <option value="EE">Electrical Engineering</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="facultyFirstName">First Name *</label>
+            <input type="text" id="facultyFirstName" placeholder="e.g., John" required>
+          </div>
+          <div class="form-group">
+            <label for="facultyLastName">Last Name *</label>
+            <input type="text" id="facultyLastName" placeholder="e.g., Doe" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="facultyEmail">Email Address *</label>
+            <input type="email" id="facultyEmail" placeholder="e.g., john.doe@college.edu" required>
+          </div>
+          <div class="form-group">
+            <label for="facultyPhone">Phone Number</label>
+            <input type="tel" id="facultyPhone" placeholder="e.g., +91 9876543210">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="facultyDesignation">Designation *</label>
+            <select id="facultyDesignation" required>
+              <option value="">Select Designation</option>
+              <option value="professor">Professor</option>
+              <option value="associate-professor">Associate Professor</option>
+              <option value="assistant-professor">Assistant Professor</option>
+              <option value="lecturer">Lecturer</option>
+              <option value="visiting-faculty">Visiting Faculty</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="facultyQualification">Highest Qualification *</label>
+            <select id="facultyQualification" required>
+              <option value="">Select Qualification</option>
+              <option value="phd">Ph.D.</option>
+              <option value="masters">Masters</option>
+              <option value="bachelors">Bachelors</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="facultySpecialization">Specialization</label>
+          <input type="text" id="facultySpecialization" placeholder="e.g., Artificial Intelligence, Database Systems">
+          <div class="form-hint">Areas of expertise</div>
+        </div>
+
+        <div class="form-group">
+          <label for="facultyExperience">Years of Experience</label>
+          <input type="number" id="facultyExperience" min="0" max="50" value="0">
+        </div>
+
+        <div class="form-group">
+          <label>Assigned Courses</label>
+          <div class="checkbox-grid" id="facultyCoursesGrid">
+            <!-- Course checkboxes will be populated dynamically -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="facultyActive" checked>
+            Active Faculty Member
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="action-btn primary" id="facultySubmitBtn">💾 Add Faculty</button>
+          <button type="button" class="action-btn secondary" onclick="hideModal('facultyModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add/Edit Room Modal -->
+  <div id="roomModal" class="modal" style="display: none;">
+    <div class="modal-content large scrollable">
+      <div class="modal-header">
+        <h3 id="roomModalTitle">🏫 Add New Room</h3>
+        <button class="modal-close" onclick="hideModal('roomModal')">×</button>
+      </div>
+      <form id="roomForm">
+        <input type="hidden" id="roomId">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roomIdInput">Room ID *</label>
+            <input type="text" id="roomIdInput" placeholder="e.g., R201, LAB_A1" required>
+            <div class="form-hint">Unique identifier for the room</div>
+          </div>
+          <div class="form-group">
+            <label for="roomName">Room Name *</label>
+            <input type="text" id="roomName" placeholder="e.g., Room 201, CS Lab A1" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roomType">Room Type *</label>
+            <select id="roomType" required>
+              <option value="">Select Type</option>
+              <option value="classroom">Classroom</option>
+              <option value="lab">Laboratory</option>
+              <option value="seminar-hall">Seminar Hall</option>
+              <option value="conference-room">Conference Room</option>
+              <option value="auditorium">Auditorium</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="roomCapacity">Capacity *</label>
+            <input type="number" id="roomCapacity" min="10" max="500" value="60" required>
+            <div class="form-hint">Number of students the room can accommodate</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roomDepartment">Department *</label>
+            <select id="roomDepartment" required>
+              <option value="">Select Department</option>
+              <option value="CSE">Computer Science & Engineering</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="ME">Mechanical Engineering</option>
+              <option value="CE">Civil Engineering</option>
+              <option value="EE">Electrical Engineering</option>
+              <option value="common">Common</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="roomFloor">Floor</label>
+            <select id="roomFloor">
+              <option value="">Select Floor</option>
+              <option value="ground">Ground Floor</option>
+              <option value="first">First Floor</option>
+              <option value="second">Second Floor</option>
+              <option value="third">Third Floor</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Facilities Available</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-item">
+              <input type="checkbox" name="facilities" value="projector"> Projector
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="facilities" value="ac"> Air Conditioning
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="facilities" value="whiteboard"> Whiteboard
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="facilities" value="computers"> Computers
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="facilities" value="sound-system"> Sound System
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="facilities" value="wifi"> WiFi
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="roomDescription">Additional Notes</label>
+          <textarea id="roomDescription" placeholder="Any additional information about the room..." rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="roomAvailable" checked>
+            Room Available for Scheduling
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="action-btn primary" id="roomSubmitBtn">💾 Add Room</button>
+          <button type="button" class="action-btn secondary" onclick="hideModal('roomModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmationModal" class="modal" style="display: none;">
+    <div class="modal-content small">
+      <div class="modal-header">
+        <h3>Confirm Action</h3>
+        <button class="modal-close" onclick="hideModal('confirmationModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmationMessage">Are you sure you want to perform this action?</p>
+      </div>
+      <div class="modal-actions">
+        <button class="action-btn danger" id="confirmActionBtn">Confirm</button>
+        <button class="action-btn secondary" onclick="hideModal('confirmationModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authManager } from './auth.js';
+
+    class AdminDashboard {
+      constructor() {
+        this.currentData = {
+          courses: [],
+          faculty: [],
+          rooms: [],
+          activities: [],
+          editingItem: null
+        };
+        this.init();
+      }
+
+      init() {
+        document.addEventListener('DOMContentLoaded', async () => {
+          console.log('Admin dashboard loaded');
+          
+          if (!authManager.requireAuth('admin')) {
+            return;
+          }
+
+          console.log('Admin authentication successful');
+          
+          this.loadUserInfo();
+          await this.loadAllData();
+          this.setupEventListeners();
+          this.setupFormHandlers();
+        });
+      }
+
+      loadUserInfo() {
+        const userData = JSON.parse(localStorage.getItem('userData'));
+        if (userData) {
+          document.getElementById('adminName').textContent = `Welcome, ${userData.firstName} ${userData.lastName}`;
+        }
+      }
+
+      async loadAllData() {
+        try {
+          this.currentData.courses = await this.loadCourses();
+          this.currentData.faculty = await this.loadFaculty();
+          this.currentData.rooms = await this.loadRooms();
+          this.currentData.activities = await this.loadActivities();
+          
+          this.renderAllTables();
+          this.updateDashboardStats();
+          
+        } catch (error) {
+          console.error('Error loading data:', error);
+          this.showNotification('Error loading data: ' + error.message, 'error');
+        }
+      }
+
+      async loadCourses() {
+        return [
+          {
+            id: '1',
+            code: '18CS53',
+            name: 'Database Management Systems',
+            credits: 4,
+            type: 'theory',
+            department: 'CSE',
+            semester: '5',
+            teacher: 'Dr. Franklin Y',
+            description: 'Fundamentals of database systems and SQL',
+            active: true
+          },
+          {
+            id: '2', 
+            code: '18CS54',
+            name: 'Advanced Java Programming',
+            credits: 4,
+            type: 'theory',
+            department: 'CSE',
+            semester: '5',
+            teacher: 'Dr. Priya K',
+            description: 'Advanced Java concepts and enterprise development',
+            active: true
+          },
+          {
+            id: '3',
+            code: '18CSL58',
+            name: 'DBMS Laboratory',
+            credits: 2,
+            type: 'lab',
+            department: 'CSE',
+            semester: '5',
+            teacher: 'Dr. Bishop M.K',
+            description: 'Practical database implementation and SQL queries',
+            active: true
+          }
+        ];
+      }
+
+      async loadFaculty() {
+        return [
+          {
+            id: '1',
+            facultyId: 'FAC001',
+            firstName: 'Franklin',
+            lastName: 'Y',
+            name: 'Dr. Franklin Y',
+            department: 'CSE',
+            email: 'franklin@college.edu',
+            phone: '+91 9876543210',
+            designation: 'professor',
+            qualification: 'phd',
+            specialization: 'Database Systems, AI',
+            experience: 15,
+            courses: ['18CS53'],
+            active: true
+          },
+          {
+            id: '2',
+            facultyId: 'FAC002', 
+            firstName: 'Priya',
+            lastName: 'K',
+            name: 'Dr. Priya K',
+            department: 'CSE',
+            email: 'priya@college.edu',
+            phone: '+91 9876543211',
+            designation: 'associate-professor',
+            qualification: 'phd',
+            specialization: 'Java Programming, Web Development',
+            experience: 10,
+            courses: ['18CS54'],
+            active: true
+          }
+        ];
+      }
+
+      async loadRooms() {
+        return [
+          {
+            id: '1',
+            roomId: 'R201',
+            name: 'Room 201',
+            type: 'classroom',
+            capacity: 60,
+            department: 'CSE',
+            floor: 'second',
+            facilities: ['projector', 'ac', 'whiteboard'],
+            description: 'Main classroom for theory classes',
+            available: true
+          },
+          {
+            id: '2',
+            roomId: 'LAB_A1',
+            name: 'CS Lab A1',
+            type: 'lab',
+            capacity: 30,
+            department: 'CSE',
+            floor: 'first',
+            facilities: ['computers', 'projector', 'wifi'],
+            description: 'Computer lab for programming courses',
+            available: true
+          }
+        ];
+      }
+
+      async loadActivities() {
+        return [
+          {
+            id: '1',
+            type: 'course',
+            message: 'Database Management Systems course was added',
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            user: 'Admin'
+          },
+          {
+            id: '2',
+            type: 'faculty',
+            message: 'Dr. Franklin Y was assigned to DBMS course',
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+            user: 'Admin'
+          }
+        ];
+      }
+
+      renderAllTables() {
+        this.renderCoursesTable();
+        this.renderFacultyTable();
+        this.renderRoomsTable();
+        this.renderRecentActivity();
+        this.populateFacultyDropdown();
+        this.populateCourseCheckboxes();
+      }
+
+      renderCoursesTable() {
+        const tbody = document.getElementById('coursesTable');
+        if (this.currentData.courses.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="no-data">No courses found. <a href="javascript:void(0)" onclick="showAddCourseModal()">Add your first course</a></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = this.currentData.courses.map(course => `
+          <tr>
+            <td><strong>${course.code}</strong></td>
+            <td>
+              <div class="course-name">${course.name}</div>
+              ${course.description ? `<div class="course-desc">${course.description}</div>` : ''}
+            </td>
+            <td>${course.teacher || '<span class="text-muted">Not assigned</span>'}</td>
+            <td>${course.credits}</td>
+            <td><span class="badge ${course.type}">${course.type}</span></td>
+            <td>${course.department}</td>
+            <td>Semester ${course.semester}</td>
+            <td><span class="badge ${course.active ? 'active' : 'inactive'}">${course.active ? 'Active' : 'Inactive'}</span></td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon edit" onclick="adminDashboard.editCourse('${course.id}')" title="Edit">✏️</button>
+                <button class="btn-icon delete" onclick="adminDashboard.confirmDelete('course', '${course.id}', '${course.name}')" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      renderFacultyTable() {
+        const tbody = document.getElementById('facultyTable');
+        if (this.currentData.faculty.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="no-data">No faculty members found. <a href="javascript:void(0)" onclick="showAddFacultyModal()">Add your first faculty member</a></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = this.currentData.faculty.map(faculty => `
+          <tr>
+            <td><strong>${faculty.facultyId}</strong></td>
+            <td>${faculty.name}</td>
+            <td>${faculty.department}</td>
+            <td>${faculty.email}</td>
+            <td>${this.formatDesignation(faculty.designation)}</td>
+            <td>${faculty.specialization || 'General'}</td>
+            <td>${faculty.experience} years</td>
+            <td><span class="badge ${faculty.active ? 'active' : 'inactive'}">${faculty.active ? 'Active' : 'Inactive'}</span></td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon edit" onclick="adminDashboard.editFaculty('${faculty.id}')" title="Edit">✏️</button>
+                <button class="btn-icon delete" onclick="adminDashboard.confirmDelete('faculty', '${faculty.id}', '${faculty.name}')" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      renderRoomsTable() {
+        const tbody = document.getElementById('roomsTable');
+        if (this.currentData.rooms.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="no-data">No rooms found. <a href="javascript:void(0)" onclick="showAddRoomModal()">Add your first room</a></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = this.currentData.rooms.map(room => `
+          <tr>
+            <td><strong>${room.roomId}</strong></td>
+            <td>${room.name}</td>
+            <td><span class="badge ${room.type}">${room.type}</span></td>
+            <td>${room.capacity} seats</td>
+            <td>${room.department}</td>
+            <td>
+              <div class="facilities-tags">
+                ${room.facilities.map(facility => `<span class="facility-tag">${facility}</span>`).join('')}
+              </div>
+            </td>
+            <td><span class="badge ${room.available ? 'active' : 'inactive'}">${room.available ? 'Available' : 'Unavailable'}</span></td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon edit" onclick="adminDashboard.editRoom('${room.id}')" title="Edit">✏️</button>
+                <button class="btn-icon delete" onclick="adminDashboard.confirmDelete('room', '${room.id}', '${room.name}')" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      renderRecentActivity() {
+        const container = document.getElementById('recentActivityList');
+        container.innerHTML = this.currentData.activities.map(activity => `
+          <div class="activity-item">
+            <div class="activity-icon ${activity.type}">${this.getActivityIcon(activity.type)}</div>
+            <div class="activity-content">
+              <p><strong>${activity.message}</strong></p>
+              <span class="activity-time">${this.formatRelativeTime(activity.timestamp)} • by ${activity.user}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      populateFacultyDropdown() {
+        const select = document.getElementById('assignedFaculty');
+        select.innerHTML = '<option value="">Select Faculty Member</option>' +
+          this.currentData.faculty.map(faculty => 
+            `<option value="${faculty.id}">${faculty.name} (${faculty.facultyId})</option>`
+          ).join('');
+      }
+
+      populateCourseCheckboxes() {
+        const container = document.getElementById('facultyCoursesGrid');
+        container.innerHTML = this.currentData.courses.map(course => `
+          <label class="checkbox-item">
+            <input type="checkbox" name="facultyCourses" value="${course.id}">
+            ${course.code} - ${course.name}
+          </label>
+        `).join('');
+      }
+
+      setupEventListeners() {
+        // Search functionality
+        document.getElementById('courseSearch').addEventListener('input', (e) => {
+          this.searchCourses(e.target.value);
+        });
+        
+        document.getElementById('facultySearch').addEventListener('input', (e) => {
+          this.searchFaculty(e.target.value);
+        });
+        
+        document.getElementById('roomSearch').addEventListener('input', (e) => {
+          this.searchRooms(e.target.value);
+        });
+      }
+
+      setupFormHandlers() {
+        // Course form
+        document.getElementById('courseForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.saveCourse();
+        });
+
+        // Faculty form
+        document.getElementById('facultyForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.saveFaculty();
+        });
+
+        // Room form
+        document.getElementById('roomForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.saveRoom();
+        });
+      }
+
+      // EDIT FUNCTIONALITY
+      editCourse(courseId) {
+        const course = this.currentData.courses.find(c => c.id === courseId);
+        if (course) {
+          this.currentData.editingItem = { type: 'course', id: courseId };
+          
+          // Populate form
+          document.getElementById('courseId').value = course.id;
+          document.getElementById('courseCode').value = course.code;
+          document.getElementById('courseName').value = course.name;
+          document.getElementById('courseCredits').value = course.credits;
+          document.getElementById('courseType').value = course.type;
+          document.getElementById('courseDepartment').value = course.department;
+          document.getElementById('courseSemester').value = course.semester;
+          document.getElementById('courseDescription').value = course.description || '';
+          document.getElementById('courseActive').checked = course.active;
+          
+          // Set assigned faculty if exists
+          if (course.teacher) {
+            const faculty = this.currentData.faculty.find(f => f.name === course.teacher);
+            if (faculty) {
+              document.getElementById('assignedFaculty').value = faculty.id;
+            }
+          }
+          
+          // Update UI
+          document.getElementById('courseModalTitle').textContent = '✏️ Edit Course';
+          document.getElementById('courseSubmitBtn').textContent = '💾 Update Course';
+          
+          this.showModal('courseModal');
+        }
+      }
+
+      editFaculty(facultyId) {
+        const faculty = this.currentData.faculty.find(f => f.id === facultyId);
+        if (faculty) {
+          this.currentData.editingItem = { type: 'faculty', id: facultyId };
+          
+          // Populate form
+          document.getElementById('facultyId').value = faculty.id;
+          document.getElementById('facultyIdInput').value = faculty.facultyId;
+          document.getElementById('facultyFirstName').value = faculty.firstName;
+          document.getElementById('facultyLastName').value = faculty.lastName;
+          document.getElementById('facultyDepartment').value = faculty.department;
+          document.getElementById('facultyEmail').value = faculty.email;
+          document.getElementById('facultyPhone').value = faculty.phone || '';
+          document.getElementById('facultyDesignation').value = faculty.designation;
+          document.getElementById('facultyQualification').value = faculty.qualification;
+          document.getElementById('facultySpecialization').value = faculty.specialization || '';
+          document.getElementById('facultyExperience').value = faculty.experience;
+          document.getElementById('facultyActive').checked = faculty.active;
+          
+          // Check assigned courses
+          document.querySelectorAll('input[name="facultyCourses"]').forEach(checkbox => {
+            checkbox.checked = faculty.courses.includes(checkbox.value);
+          });
+          
+          // Update UI
+          document.getElementById('facultyModalTitle').textContent = '✏️ Edit Faculty';
+          document.getElementById('facultySubmitBtn').textContent = '💾 Update Faculty';
+          
+          this.showModal('facultyModal');
+        }
+      }
+
+      editRoom(roomId) {
+        const room = this.currentData.rooms.find(r => r.id === roomId);
+        if (room) {
+          this.currentData.editingItem = { type: 'room', id: roomId };
+          
+          // Populate form
+          document.getElementById('roomId').value = room.id;
+          document.getElementById('roomIdInput').value = room.roomId;
+          document.getElementById('roomName').value = room.name;
+          document.getElementById('roomType').value = room.type;
+          document.getElementById('roomCapacity').value = room.capacity;
+          document.getElementById('roomDepartment').value = room.department;
+          document.getElementById('roomFloor').value = room.floor || '';
+          document.getElementById('roomDescription').value = room.description || '';
+          document.getElementById('roomAvailable').checked = room.available;
+          
+          // Check facilities
+          document.querySelectorAll('input[name="facilities"]').forEach(checkbox => {
+            checkbox.checked = room.facilities.includes(checkbox.value);
+          });
+          
+          // Update UI
+          document.getElementById('roomModalTitle').textContent = '✏️ Edit Room';
+          document.getElementById('roomSubmitBtn').textContent = '💾 Update Room';
+          
+          this.showModal('roomModal');
+        }
+      }
+
+      // SAVE FUNCTIONALITY
+      saveCourse() {
+        const formData = {
+          code: document.getElementById('courseCode').value.trim(),
+          name: document.getElementById('courseName').value.trim(),
+          credits: parseInt(document.getElementById('courseCredits').value),
+          type: document.getElementById('courseType').value,
+          department: document.getElementById('courseDepartment').value,
+          semester: document.getElementById('courseSemester').value,
+          description: document.getElementById('courseDescription').value.trim(),
+          active: document.getElementById('courseActive').checked
+        };
+
+        // Get assigned faculty
+        const facultyId = document.getElementById('assignedFaculty').value;
+        if (facultyId) {
+          const faculty = this.currentData.faculty.find(f => f.id === facultyId);
+          formData.teacher = faculty ? faculty.name : null;
+        } else {
+          formData.teacher = null;
+        }
+
+        if (!this.validateCourse(formData)) return;
+
+        try {
+          if (this.currentData.editingItem?.type === 'course') {
+            // Update existing course
+            const courseIndex = this.currentData.courses.findIndex(c => c.id === this.currentData.editingItem.id);
+            if (courseIndex !== -1) {
+              this.currentData.courses[courseIndex] = {
+                ...this.currentData.courses[courseIndex],
+                ...formData
+              };
+              this.addActivity('course', `${formData.name} course was updated`);
+              this.showNotification('Course updated successfully!', 'success');
+            }
+          } else {
+            // Add new course
+            const newCourse = {
+              id: Date.now().toString(),
+              ...formData,
+              teacher: formData.teacher || null,
+              createdAt: new Date().toISOString()
+            };
+            this.currentData.courses.push(newCourse);
+            this.addActivity('course', `${formData.name} course was added`);
+            this.showNotification('Course added successfully!', 'success');
+          }
+          
+          this.renderCoursesTable();
+          this.updateDashboardStats();
+          this.hideModal('courseModal');
+          this.resetForm('courseForm');
+          this.currentData.editingItem = null;
+          
+        } catch (error) {
+          this.showNotification('Error saving course: ' + error.message, 'error');
+        }
+      }
+
+      saveFaculty() {
+        const assignedCourses = Array.from(document.querySelectorAll('input[name="facultyCourses"]:checked'))
+                                   .map(checkbox => checkbox.value);
+
+        const formData = {
+          facultyId: document.getElementById('facultyIdInput').value.trim(),
+          firstName: document.getElementById('facultyFirstName').value.trim(),
+          lastName: document.getElementById('facultyLastName').value.trim(),
+          name: `${document.getElementById('facultyFirstName').value.trim()} ${document.getElementById('facultyLastName').value.trim()}`,
+          department: document.getElementById('facultyDepartment').value,
+          email: document.getElementById('facultyEmail').value.trim(),
+          phone: document.getElementById('facultyPhone').value.trim(),
+          designation: document.getElementById('facultyDesignation').value,
+          qualification: document.getElementById('facultyQualification').value,
+          specialization: document.getElementById('facultySpecialization').value.trim(),
+          experience: parseInt(document.getElementById('facultyExperience').value) || 0,
+          courses: assignedCourses,
+          active: document.getElementById('facultyActive').checked
+        };
+
+        if (!this.validateFaculty(formData)) return;
+
+        try {
+          if (this.currentData.editingItem?.type === 'faculty') {
+            // Update existing faculty
+            const facultyIndex = this.currentData.faculty.findIndex(f => f.id === this.currentData.editingItem.id);
+            if (facultyIndex !== -1) {
+              this.currentData.faculty[facultyIndex] = {
+                ...this.currentData.faculty[facultyIndex],
+                ...formData
+              };
+              this.addActivity('faculty', `${formData.name} was updated`);
+              this.showNotification('Faculty updated successfully!', 'success');
+            }
+          } else {
+            // Add new faculty
+            const newFaculty = {
+              id: Date.now().toString(),
+              ...formData,
+              createdAt: new Date().toISOString()
+            };
+            this.currentData.faculty.push(newFaculty);
+            this.addActivity('faculty', `${formData.name} was added as faculty`);
+            this.showNotification('Faculty added successfully!', 'success');
+          }
+          
+          this.renderFacultyTable();
+          this.updateDashboardStats();
+          this.hideModal('facultyModal');
+          this.resetForm('facultyForm');
+          this.currentData.editingItem = null;
+          
+        } catch (error) {
+          this.showNotification('Error saving faculty: ' + error.message, 'error');
+        }
+      }
+
+      saveRoom() {
+        const facilities = Array.from(document.querySelectorAll('input[name="facilities"]:checked'))
+                              .map(checkbox => checkbox.value);
+
+        const formData = {
+          roomId: document.getElementById('roomIdInput').value.trim(),
+          name: document.getElementById('roomName').value.trim(),
+          type: document.getElementById('roomType').value,
+          capacity: parseInt(document.getElementById('roomCapacity').value),
+          department: document.getElementById('roomDepartment').value,
+          floor: document.getElementById('roomFloor').value,
+          facilities: facilities,
+          description: document.getElementById('roomDescription').value.trim(),
+          available: document.getElementById('roomAvailable').checked
+        };
+
+        if (!this.validateRoom(formData)) return;
+
+        try {
+          if (this.currentData.editingItem?.type === 'room') {
+            // Update existing room
+            const roomIndex = this.currentData.rooms.findIndex(r => r.id === this.currentData.editingItem.id);
+            if (roomIndex !== -1) {
+              this.currentData.rooms[roomIndex] = {
+                ...this.currentData.rooms[roomIndex],
+                ...formData
+              };
+              this.addActivity('room', `${formData.name} room was updated`);
+              this.showNotification('Room updated successfully!', 'success');
+            }
+          } else {
+            // Add new room
+            const newRoom = {
+              id: Date.now().toString(),
+              ...formData,
+              createdAt: new Date().toISOString()
+            };
+            this.currentData.rooms.push(newRoom);
+            this.addActivity('room', `${formData.name} room was added`);
+            this.showNotification('Room added successfully!', 'success');
+          }
+          
+          this.renderRoomsTable();
+          this.updateDashboardStats();
+          this.hideModal('roomModal');
+          this.resetForm('roomForm');
+          this.currentData.editingItem = null;
+          
+        } catch (error) {
+          this.showNotification('Error saving room: ' + error.message, 'error');
+        }
+      }
+
+      // Validation methods (similar to previous implementation)
+      validateCourse(data) {
+        if (!data.code || !data.name) {
+          this.showNotification('Course code and name are required', 'error');
+          return false;
+        }
+
+        // Check for duplicate course code (excluding current editing item)
+        const duplicate = this.currentData.courses.find(course => 
+          course.code.toLowerCase() === data.code.toLowerCase() && 
+          course.id !== this.currentData.editingItem?.id
+        );
+        if (duplicate) {
+          this.showNotification('Course code already exists', 'error');
+          return false;
+        }
+
+        return true;
+      }
+
+      validateFaculty(data) {
+        if (!data.facultyId || !data.firstName || !data.lastName || !data.email) {
+          this.showNotification('Faculty ID, name, and email are required', 'error');
+          return false;
+        }
+
+        // Check for duplicate faculty ID (excluding current editing item)
+        const duplicateId = this.currentData.faculty.find(faculty => 
+          faculty.facultyId.toLowerCase() === data.facultyId.toLowerCase() &&
+          faculty.id !== this.currentData.editingItem?.id
+        );
+        if (duplicateId) {
+          this.showNotification('Faculty ID already exists', 'error');
+          return false;
+        }
+
+        // Check for duplicate email (excluding current editing item)
+        const duplicateEmail = this.currentData.faculty.find(faculty => 
+          faculty.email.toLowerCase() === data.email.toLowerCase() &&
+          faculty.id !== this.currentData.editingItem?.id
+        );
+        if (duplicateEmail) {
+          this.showNotification('Email already exists', 'error');
+          return false;
+        }
+
+        return true;
+      }
+
+      validateRoom(data) {
+        if (!data.roomId || !data.name) {
+          this.showNotification('Room ID and name are required', 'error');
+          return false;
+        }
+
+        // Check for duplicate room ID (excluding current editing item)
+        const duplicate = this.currentData.rooms.find(room => 
+          room.roomId.toLowerCase() === data.roomId.toLowerCase() &&
+          room.id !== this.currentData.editingItem?.id
+        );
+        if (duplicate) {
+          this.showNotification('Room ID already exists', 'error');
+          return false;
+        }
+
+        return true;
+      }
+
+      resetForm(formId) {
+        document.getElementById(formId).reset();
+        // Reset modal titles and buttons to add mode
+        document.getElementById('courseModalTitle').textContent = '➕ Add New Course';
+        document.getElementById('courseSubmitBtn').textContent = '💾 Add Course';
+        document.getElementById('facultyModalTitle').textContent = '👨‍🏫 Add New Faculty';
+        document.getElementById('facultySubmitBtn').textContent = '💾 Add Faculty';
+        document.getElementById('roomModalTitle').textContent = '🏫 Add New Room';
+        document.getElementById('roomSubmitBtn').textContent = '💾 Add Room';
+      }
+
+      // Search methods (similar to previous implementation)
+      searchCourses(query) {
+        const filtered = this.currentData.courses.filter(course =>
+          course.code.toLowerCase().includes(query.toLowerCase()) ||
+          course.name.toLowerCase().includes(query.toLowerCase()) ||
+          course.department.toLowerCase().includes(query.toLowerCase())
+        );
+        this.renderFilteredTable('coursesTable', filtered, this.renderCoursesTable.bind(this));
+      }
+
+      searchFaculty(query) {
+        const filtered = this.currentData.faculty.filter(faculty =>
+          faculty.facultyId.toLowerCase().includes(query.toLowerCase()) ||
+          faculty.name.toLowerCase().includes(query.toLowerCase()) ||
+          faculty.department.toLowerCase().includes(query.toLowerCase()) ||
+          faculty.email.toLowerCase().includes(query.toLowerCase())
+        );
+        this.renderFilteredTable('facultyTable', filtered, this.renderFacultyTable.bind(this));
+      }
+
+      searchRooms(query) {
+        const filtered = this.currentData.rooms.filter(room =>
+          room.roomId.toLowerCase().includes(query.toLowerCase()) ||
+          room.name.toLowerCase().includes(query.toLowerCase()) ||
+          room.department.toLowerCase().includes(query.toLowerCase()) ||
+          room.type.toLowerCase().includes(query.toLowerCase())
+        );
+        this.renderFilteredTable('roomsTable', filtered, this.renderRoomsTable.bind(this));
+      }
+
+      renderFilteredTable(tableId, filteredData, renderFunction) {
+        const tbody = document.getElementById(tableId);
+        if (filteredData.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="no-data">No items match your search</td></tr>`;
+          return;
+        }
+        const tempData = this.currentData[tableId.replace('Table', '')];
+        this.currentData[tableId.replace('Table', '')] = filteredData;
+        renderFunction();
+        this.currentData[tableId.replace('Table', '')] = tempData;
+      }
+
+      updateDashboardStats() {
+        document.getElementById('totalCourses').textContent = this.currentData.courses.length;
+        document.getElementById('totalFaculty').textContent = this.currentData.faculty.length;
+        document.getElementById('totalRooms').textContent = this.currentData.rooms.length;
+        
+        document.getElementById('dashboardCourses').textContent = this.currentData.courses.length;
+        document.getElementById('dashboardFaculty').textContent = this.currentData.faculty.length;
+        document.getElementById('dashboardRooms').textContent = this.currentData.rooms.length;
+        document.getElementById('dashboardTimetables').textContent = '3'; // Example value
+        
+        document.getElementById('totalUsers').textContent = this.currentData.courses.length;
+        document.getElementById('activeTimetables').textContent = this.currentData.faculty.length;
+      }
+
+      addActivity(type, message) {
+        const activity = {
+          id: Date.now().toString(),
+          type: type,
+          message: message,
+          timestamp: new Date().toISOString(),
+          user: 'Admin'
+        };
+        this.currentData.activities.unshift(activity);
+        if (this.currentData.activities.length > 5) {
+          this.currentData.activities.pop();
+        }
+        this.renderRecentActivity();
+      }
+
+      confirmDelete(type, id, name) {
+        const message = `Are you sure you want to delete ${type} "${name}"? This action cannot be undone.`;
+        document.getElementById('confirmationMessage').textContent = message;
+        
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        confirmBtn.onclick = () => this.deleteItem(type, id);
+        
+        this.showModal('confirmationModal');
+      }
+
+      deleteItem(type, id) {
+        let collection;
+        switch(type) {
+          case 'course':
+            collection = this.currentData.courses;
+            break;
+          case 'faculty':
+            collection = this.currentData.faculty;
+            break;
+          case 'room':
+            collection = this.currentData.rooms;
+            break;
+        }
+        
+        if (collection) {
+          const item = collection.find(item => item.id === id);
+          collection = collection.filter(item => item.id !== id);
+          this.currentData[type + 's'] = collection;
+          
+          this.renderAllTables();
+          this.updateDashboardStats();
+          this.addActivity(type, `${item.name} was deleted`);
+          this.showNotification(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully!`, 'success');
+        }
+        
+        this.hideModal('confirmationModal');
+      }
+
+      // Utility methods
+      formatDesignation(designation) {
+        const designations = {
+          'professor': 'Professor',
+          'associate-professor': 'Associate Professor',
+          'assistant-professor': 'Assistant Professor',
+          'lecturer': 'Lecturer',
+          'visiting-faculty': 'Visiting Faculty'
+        };
+        return designations[designation] || designation;
+      }
+
+      formatRelativeTime(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffInMinutes = Math.floor((now - time) / (1000 * 60));
+        
+        if (diffInMinutes < 1) return 'Just now';
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+        return `${Math.floor(diffInMinutes / 1440)}d ago`;
+      }
+
+      getActivityIcon(type) {
+        const icons = {
+          'course': '📚',
+          'faculty': '👨‍🏫',
+          'room': '🏫',
+          'student': '👥',
+          'timetable': '🎯'
+        };
+        return icons[type] || '📋';
+      }
+
+      showModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      }
+
+      hideModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restore scrolling
+        this.currentData.editingItem = null;
+        this.resetForm(modalId.replace('Modal', 'Form'));
+      }
+
+      showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+          <div class="notification-content">
+            <span class="notification-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+            <span class="notification-message">${message}</span>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.remove();
+        }, 5000);
+      }
+    }
+
+    // Global functions
+    function showSection(sectionId) {
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+      
+      document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.target.classList.add('active');
+    }
+
+    function showAddCourseModal() {
+      adminDashboard.showModal('courseModal');
+    }
+
+    function showAddFacultyModal() {
+      adminDashboard.showModal('facultyModal');
+    }
+
+    function showAddRoomModal() {
+      adminDashboard.showModal('roomModal');
+    }
+
+    function hideModal(modalId) {
+      adminDashboard.hideModal(modalId);
+    }
+
+    function logout() {
+      window.logout();
+    }
+
+    function searchCourses() {
+      const query = document.getElementById('courseSearch').value;
+      adminDashboard.searchCourses(query);
+    }
+
+    function searchFaculty() {
+      const query = document.getElementById('facultySearch').value;
+      adminDashboard.searchFaculty(query);
+    }
+
+    function searchRooms() {
+      const query = document.getElementById('roomSearch').value;
+      adminDashboard.searchRooms(query);
+    }
+
+    // Import/Export functions
+    function importCourses() {
+      adminDashboard.showNotification('Import courses functionality coming soon!', 'info');
+    }
+
+    function exportCourses() {
+      adminDashboard.showNotification('Export courses functionality coming soon!', 'info');
+    }
+
+    function importFaculty() {
+      adminDashboard.showNotification('Import faculty functionality coming soon!', 'info');
+    }
+
+    function exportFaculty() {
+      adminDashboard.showNotification('Export faculty functionality coming soon!', 'info');
+    }
+
+    function importRooms() {
+      adminDashboard.showNotification('Import rooms functionality coming soon!', 'info');
+    }
+
+    function exportRooms() {
+      adminDashboard.showNotification('Export rooms functionality coming soon!', 'info');
+    }
+
+    function saveSettings() {
+      adminDashboard.showNotification('Settings saved successfully!', 'success');
+    }
+
+    function resetSettings() {
+      adminDashboard.showNotification('Settings reset to defaults!', 'info');
+    }
+
+    // Timetable generation functions
+    function nextStep(step) {
+      document.querySelectorAll('.wizard-step').forEach(step => {
+        step.classList.remove('active');
+      });
+      document.getElementById(`step${step}`).classList.add('active');
+    }
+
+    function prevStep(step) {
+      document.querySelectorAll('.wizard-step').forEach(step => {
+        step.classList.remove('active');
+      });
+      document.getElementById(`step${step}`).classList.add('active');
+    }
+
+    function generateTimetable() {
+      document.getElementById('resultsSection').style.display = 'block';
+      document.getElementById('timetableResults').innerHTML = `
+        <div class="generated-timetable">
+          <h4>🎉 Timetable Generated Successfully!</h4>
+          <p>Semester 5 - Computer Science & Engineering</p>
+          <div class="timetable-preview">
+            <p>Timetable preview will be displayed here with all assigned classes, rooms, and faculty.</p>
+          </div>
+        </div>
+      `;
+      adminDashboard.showNotification('Timetable generated successfully!', 'success');
+    }
+
+    function exportTimetable() {
+      adminDashboard.showNotification('Timetable exported successfully!', 'success');
+    }
+
+    function saveTimetable() {
+      adminDashboard.showNotification('Timetable saved to database!', 'success');
+    }
+
+    function publishTimetable() {
+      adminDashboard.showNotification('Timetable published! Students and faculty can now view it.', 'success');
+    }
+
+    function loadExistingData() {
+      adminDashboard.showNotification('Existing data loaded successfully!', 'success');
+    }
+
+    // Initialize admin dashboard
+    const adminDashboard = new AdminDashboard();
+
+    // Export for global access
+    window.adminDashboard = adminDashboard;
+    window.showSection = showSection;
+    window.showAddCourseModal = showAddCourseModal;
+    window.showAddFacultyModal = showAddFacultyModal;
+    window.showAddRoomModal = showAddRoomModal;
+    window.hideModal = hideModal;
+    window.logout = logout;
+    window.searchCourses = searchCourses;
+    window.searchFaculty = searchFaculty;
+    window.searchRooms = searchRooms;
+    window.nextStep = nextStep;
+    window.prevStep = prevStep;
+    window.generateTimetable = generateTimetable;
+    window.exportTimetable = exportTimetable;
+    window.saveTimetable = saveTimetable;
+    window.publishTimetable = publishTimetable;
+    window.loadExistingData = loadExistingData;
+  </script>
+</body>
+</html>

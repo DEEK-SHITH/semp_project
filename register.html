@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Smart Timetable</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="top">
+    <h1>Smart Timetable System</h1>
+    <p>Create Your Account</p>
+  </div>
+
+  <div class="container">
+    <div class="login-panel">
+      <div class="login-header">
+        <h2>Create Account</h2>
+        <p>Join our timetable management system</p>
+      </div>
+      
+      <form id="registerForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name *</label>
+            <input type="text" id="firstName" required>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name *</label>
+            <input type="text" id="lastName" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input type="email" id="email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <input type="password" id="password" minlength="6" required>
+          <small>Password must be at least 6 characters long</small>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password *</label>
+          <input type="password" id="confirmPassword" required>
+        </div>
+
+        <div class="form-group">
+          <label for="role">I am a *</label>
+          <select id="role" required onchange="toggleRoleFields()">
+            <option value="">Select Role</option>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+
+        <!-- Student Fields -->
+        <div id="studentFields" class="role-fields" style="display: none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="department">Department *</label>
+              <select id="department" required>
+                <option value="">Select Department</option>
+                <option value="CSE">Computer Science & Engineering</option>
+                <option value="ECE">Electronics & Communication</option>
+                <option value="ME">Mechanical Engineering</option>
+                <option value="CE">Civil Engineering</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="semester">Semester *</label>
+              <select id="semester" required>
+                <option value="">Select Semester</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+                <option value="7">Semester 7</option>
+                <option value="8">Semester 8</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="section">Section *</label>
+            <select id="section" required>
+              <option value="">Select Section</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Faculty Fields -->
+        <div id="facultyFields" class="role-fields" style="display: none;">
+          <div class="form-group">
+            <label for="facultyDepartment">Department *</label>
+            <select id="facultyDepartment" required>
+              <option value="">Select Department</option>
+              <option value="CSE">Computer Science & Engineering</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="ME">Mechanical Engineering</option>
+              <option value="CE">Civil Engineering</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="facultyId">Faculty ID *</label>
+            <input type="text" id="facultyId" placeholder="e.g., FAC001">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="terms" required>
+            I agree to the <a href="#" onclick="alert('Terms and conditions will be displayed here')">Terms of Service</a> and <a href="#" onclick="alert('Privacy policy will be displayed here')">Privacy Policy</a> *
+          </label>
+        </div>
+
+        <button type="submit" class="login-btn">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loader" style="display: none;">Creating Account...</span>
+        </button>
+      </form>
+      
+      <p id="register-status"></p>
+      
+      <div class="auth-links">
+        <p>Already have an account? <a href="login.html">Sign In</a></p>
+        <button onclick="window.location.href='index.html'" class="back-btn">← Back to Home</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    function toggleRoleFields() {
+      const role = document.getElementById('role').value;
+      document.querySelectorAll('.role-fields').forEach(field => {
+        field.style.display = 'none';
+      });
+      
+      if (role === 'student') {
+        document.getElementById('studentFields').style.display = 'block';
+      } else if (role === 'faculty') {
+        document.getElementById('facultyFields').style.display = 'block';
+      }
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const btnText = submitBtn.querySelector('.btn-text');
+      const btnLoader = submitBtn.querySelector('.btn-loader');
+      const statusElement = document.getElementById('register-status');
+      
+      // Get form values
+      const formData = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        confirmPassword: document.getElementById('confirmPassword').value,
+        role: document.getElementById('role').value
+      };
+
+      // Validation
+      if (formData.password !== formData.confirmPassword) {
+        statusElement.textContent = 'Passwords do not match.';
+        statusElement.className = 'error';
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        statusElement.textContent = 'Password must be at least 6 characters long.';
+        statusElement.className = 'error';
+        return;
+      }
+
+      // Role-specific data
+      if (formData.role === 'student') {
+        formData.department = document.getElementById('department').value;
+        formData.semester = document.getElementById('semester').value;
+        formData.section = document.getElementById('section').value;
+        
+        if (!formData.department || !formData.semester || !formData.section) {
+          statusElement.textContent = 'Please fill all student fields.';
+          statusElement.className = 'error';
+          return;
+        }
+      } else if (formData.role === 'faculty') {
+        formData.department = document.getElementById('facultyDepartment').value;
+        formData.facultyId = document.getElementById('facultyId').value.trim();
+        
+        if (!formData.department || !formData.facultyId) {
+          statusElement.textContent = 'Please fill all faculty fields.';
+          statusElement.className = 'error';
+          return;
+        }
+      }
+
+      // Show loading
+      btnText.style.display = 'none';
+      btnLoader.style.display = 'inline';
+      submitBtn.disabled = true;
+      statusElement.textContent = '';
+      
+      try {
+        // Import auth manager
+        const { authManager } = await import('./auth.js');
+        await authManager.register(formData);
+        
+        statusElement.textContent = 'Account created successfully! Redirecting to login...';
+        statusElement.className = 'success';
+        
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 2000);
+        
+      } catch (error) {
+        statusElement.textContent = error.message;
+        statusElement.className = 'error';
+        
+        // Reset button
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

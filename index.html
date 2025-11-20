@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Timetable Generator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="top">
+    <h1>Smart Timetable Generator</h1>
+    <p>Automated timetable generation • Conflict-free scheduling • Multi-role access</p>
+  </div>
+
+  <div class="container">
+    <div class="welcome-panel">
+      <h2>Welcome to Smart Timetable Management System</h2>
+      <p>AI-powered timetable generation with automatic conflict resolution</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>🎯 Smart Generation</h3>
+          <p>Automatically generates optimized timetables based on constraints</p>
+        </div>
+        <div class="feature-card">
+          <h3>⚡ Conflict-Free</h3>
+          <p>Eliminates teacher, room, and student group conflicts</p>
+        </div>
+        <div class="feature-card">
+          <h3>👥 Multi-Role Access</h3>
+          <p>Separate dashboards for Students, Faculty, and Admin</p>
+        </div>
+      </div>
+      
+      <p class="login-prompt">Please select your role to continue:</p>
+      <div class="role-buttons">
+        <button onclick="goToLogin('student')" class="role-btn student">
+          📚 Student Portal
+        </button>
+        <button onclick="goToLogin('faculty')" class="role-btn faculty">
+          👨‍🏫 Faculty Portal
+        </button>
+        <button onclick="goToLogin('admin')" class="role-btn admin">
+          ⚙️ Admin Portal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goToLogin(role) {
+      window.location.href = `login.html?role=${role}`;
+    }
+
+    // Check if user is already logged in
+    document.addEventListener('DOMContentLoaded', function() {
+      const userRole = localStorage.getItem('userRole');
+      if (userRole) {
+        window.location.href = userRole + '.html';
+      }
+    });
+  </script>
+  <!-- In index.html, update the goToLogin function -->
+<script>
+  function goToLogin(role) {
+    console.log('Redirecting to login as:', role);
+    window.location.href = `login.html?role=${role}`;
+  }
+
+  // Check if user is already logged in
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Home page loaded');
+    
+    const userData = localStorage.getItem('userData');
+    const userRole = localStorage.getItem('userRole');
+    
+    if (userData && userRole) {
+      console.log('User already logged in, redirecting to dashboard...');
+      // Use setTimeout to ensure page is fully loaded
+      setTimeout(() => {
+        switch(userRole) {
+          case 'student':
+            window.location.href = 'student.html';
+            break;
+          case 'faculty':
+            window.location.href = 'faculty.html';
+            break;
+          case 'admin':
+            window.location.href = 'admin.html';
+            break;
+        }
+      }, 100);
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard - Smart Timetable</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="top">
+    <h1>📚 Student Dashboard</h1>
+    <p>View your personalized timetable and academic schedule</p>
+    <div class="user-info">
+      <span id="studentName">Loading...</span>
+      <button onclick="logout()" class="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Student Profile Panel -->
+    <div class="panel student-profile">
+      <h2>🎓 Student Profile</h2>
+      <div class="profile-grid">
+        <div class="profile-item">
+          <label>Student ID:</label>
+          <span id="profileStudentId">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Name:</label>
+          <span id="profileName">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Department:</label>
+          <span id="profileDepartment">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Semester:</label>
+          <span id="profileSemester">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Section:</label>
+          <span id="profileSection">-</span>
+        </div>
+        <div class="profile-item">
+          <label>Academic Year:</label>
+          <span id="profileYear">2024-25</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="panel quick-actions">
+      <h2>⚡ Quick Actions</h2>
+      <div class="action-buttons">
+        <button onclick="downloadTimetable()" class="action-btn download">
+          📥 Download Timetable
+        </button>
+        <button onclick="printTimetable()" class="action-btn print">
+          🖨️ Print Timetable
+        </button>
+        <button onclick="showTodaySchedule()" class="action-btn today">
+          📅 Today's Classes
+        </button>
+        <button onclick="viewAcademicCalendar()" class="action-btn calendar">
+          📅 Academic Calendar
+        </button>
+      </div>
+    </div>
+
+    <!-- Timetable Controls -->
+    <div class="panel filters-panel">
+      <h2>🎛️ View Options</h2>
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label for="viewType">View Type:</label>
+          <select id="viewType" onchange="changeViewType()">
+            <option value="weekly">📅 Weekly View</option>
+            <option value="daily">📖 Daily View</option>
+            <option value="list">📋 List View</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="weekSelector">Week:</label>
+          <select id="weekSelector" onchange="loadTimetable()">
+            <option value="current">Current Week</option>
+            <option value="next">Next Week</option>
+          </select>
+        </div>
+        <button onclick="loadTimetable()" class="load-btn">
+          🔄 Refresh Timetable
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Timetable -->
+    <div class="panel wide timetable-container">
+      <div class="timetable-header">
+        <h2>📅 Your Weekly Timetable</h2>
+        <div class="academic-info">
+          <span class="semester-badge" id="currentSemester">Semester: Loading...</span>
+          <span class="date-range" id="currentWeek">Week: Loading...</span>
+        </div>
+      </div>
+      
+      <div id="studentTimetable" class="timetable-content">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading your timetable...</p>
+        </div>
+      </div>
+      
+      <div class="timetable-stats">
+        <div class="stat-card">
+          <span class="stat-number" id="totalClasses">0</span>
+          <span class="stat-label">Total Classes</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="totalHours">0</span>
+          <span class="stat-label">Hours/Week</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="differentSubjects">0</span>
+          <span class="stat-label">Subjects</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="labSessions">0</span>
+          <span class="stat-label">Lab Sessions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Courses -->
+    <div class="panel course-info">
+      <h2>📖 Current Courses</h2>
+      <div id="coursesList" class="courses-grid">
+        <!-- Courses will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="panel events-panel">
+      <h2>📅 Upcoming Events</h2>
+      <div id="upcomingEvents" class="events-list">
+        <div class="event-item">
+          <div class="event-date">Nov 20</div>
+          <div class="event-details">
+            <div class="event-title">DBMS Midterm Exam</div>
+            <div class="event-time">10:00 AM - 12:00 PM</div>
+          </div>
+        </div>
+        <div class="event-item">
+          <div class="event-date">Nov 25</div>
+          <div class="event-details">
+            <div class="event-title">AJava Lab Submission</div>
+            <div class="event-time">11:30 AM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Faculty Contacts -->
+    <div class="panel faculty-contacts">
+      <h2>👨‍🏫 Faculty Contacts</h2>
+      <div id="facultyContacts" class="contacts-list">
+        <!-- Faculty contacts will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { authManager } from './auth.js';
+
+    let currentTimetable = null;
+    let userData = null;
+
+    // Authentication check with persistent session
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('Student dashboard loaded');
+      
+      // Check authentication for student role
+      if (!authManager.requireAuth('student')) {
+        return;
+      }
+
+      console.log('Student authentication successful');
+      
+      // Load user data from localStorage (persistent)
+      userData = JSON.parse(localStorage.getItem('userData'));
+      if (!userData) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Load all student data
+      await loadStudentData();
+    });
+
+    async function loadStudentData() {
+      // Load user profile
+      loadUserProfile();
+      
+      // Load timetable and courses
+      await loadTimetable();
+      await loadCourses();
+      await loadFacultyContacts();
+    }
+
+    function loadUserProfile() {
+      document.getElementById('studentName').textContent = `Welcome, ${userData.firstName}`;
+      document.getElementById('profileStudentId').textContent = userData.studentId || `STU${userData.uid.slice(-4)}`;
+      document.getElementById('profileName').textContent = `${userData.firstName} ${userData.lastName}`;
+      document.getElementById('profileDepartment').textContent = userData.department;
+      document.getElementById('profileSemester').textContent = `Semester ${userData.semester}`;
+      document.getElementById('profileSection').textContent = `Section ${userData.section}`;
+      document.getElementById('currentSemester').textContent = `Semester: ${userData.semester} ${userData.section}`;
+    }
+
+    async function loadTimetable() {
+      const viewType = document.getElementById('viewType').value;
+      const weekSelector = document.getElementById('weekSelector').value;
+      
+      // Show loading
+      document.getElementById('studentTimetable').innerHTML = `
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Loading your timetable...</p>
+        </div>
+      `;
+
+      try {
+        // Generate timetable based on student data
+        currentTimetable = await generateStudentTimetable(userData);
+        renderStudentTimetable(currentTimetable, viewType);
+        updateStatistics(currentTimetable);
+        
+        // Update week display
+        const weekDisplay = weekSelector === 'current' ? 'Current Week' : 'Next Week';
+        document.getElementById('currentWeek').textContent = `Week: ${weekDisplay}`;
+        
+      } catch (error) {
+        document.getElementById('studentTimetable').innerHTML = `
+          <div class="error-message">
+            <h3>Unable to load timetable</h3>
+            <p>${error.message}</p>
+            <button onclick="loadTimetable()" class="action-btn">Try Again</button>
+          </div>
+        `;
+      }
+    }
+
+    async function generateStudentTimetable(studentData) {
+      // Generate timetable based on department and semester
+      const department = studentData.department;
+      const semester = studentData.semester;
+      
+      // Sample timetable data - in real app, this would come from database
+      return {
+        studentId: studentData.uid,
+        department: department,
+        semester: semester,
+        section: studentData.section,
+        academicYear: "2024-25",
+        generatedAt: new Date().toISOString(),
+        days: {
+          "Monday": [
+            { time: "8:30-9:30", course: "DBMS", code: "CSE501", teacher: "Dr. Franklin Y", room: "Room 201", type: "Theory" },
+            { time: "9:30-10:30", course: "AJava", code: "CSE502", teacher: "Dr. Priya K", room: "Room 202", type: "Theory" },
+            { time: "10:30-11:00", course: "Break", type: "Break", isBreak: true },
+            { time: "11:00-12:00", course: "DAA", code: "CSE503", teacher: "Prof. Sharma", room: "Room 203", type: "Theory" },
+            { time: "12:00-1:00", course: "Lunch", type: "Lunch", isLunch: true },
+            { time: "1:00-2:00", course: "SE&PM", code: "CSE504", teacher: "Jovita P.X", room: "Room 204", type: "Theory" },
+            { time: "2:00-4:00", course: "DBMS Lab", code: "CSE501L", teacher: "Dr. Bishop M.K", room: "CS Lab A1", type: "Lab" }
+          ],
+          "Tuesday": [
+            { time: "8:30-9:30", course: "AJava", code: "CSE502", teacher: "Dr. Priya K", room: "Room 201", type: "Theory" },
+            { time: "9:30-10:30", course: "DBMS", code: "CSE501", teacher: "Dr. Franklin Y", room: "Room 202", type: "Theory" },
+            { time: "10:30-11:00", course: "Break", type: "Break", isBreak: true },
+            { time: "11:00-12:00", course: "Big Data", code: "CSE505", teacher: "Dr. Novel Q", room: "Room 205", type: "Theory" },
+            { time: "12:00-1:00", course: "Lunch", type: "Lunch", isLunch: true },
+            { time: "1:00-3:00", course: "AJava Lab", code: "CSE502L", teacher: "Dr. Priya K", room: "Lab 302", type: "Lab" }
+          ],
+          "Wednesday": [
+            { time: "8:30-10:30", course: "Project Lab", code: "CSE506L", teacher: "Mentor", room: "Project Lab", type: "Lab" },
+            { time: "10:30-11:00", course: "Break", type: "Break", isBreak: true },
+            { time: "11:00-12:00", course: "SE&PM", code: "CSE504", teacher: "Jovita P.X", room: "Room 203", type: "Theory" },
+            { time: "12:00-1:00", course: "Lunch", type: "Lunch", isLunch: true },
+            { time: "1:00-2:00", course: "DAA", code: "CSE503", teacher: "Prof. Sharma", room: "Room 204", type: "Theory" }
+          ],
+          "Thursday": [
+            { time: "8:30-9:30", course: "Big Data", code: "CSE505", teacher: "Dr. Novel Q", room: "Room 205", type: "Theory" },
+            { time: "9:30-10:30", course: "SE&PM", code: "CSE504", teacher: "Jovita P.X", room: "Room 201", type: "Theory" },
+            { time: "10:30-11:00", course: "Break", type: "Break", isBreak: true },
+            { time: "11:00-12:00", course: "DBMS", code: "CSE501", teacher: "Dr. Franklin Y", room: "Room 202", type: "Theory" },
+            { time: "12:00-1:00", course: "Lunch", type: "Lunch", isLunch: true },
+            { time: "1:00-2:00", course: "AJava", code: "CSE502", teacher: "Dr. Priya K", room: "Room 203", type: "Theory" }
+          ],
+          "Friday": [
+            { time: "8:30-10:30", course: "DAA Lab", code: "CSE503L", teacher: "Prof. Sharma", room: "Lab 301", type: "Lab" },
+            { time: "10:30-11:00", course: "Break", type: "Break", isBreak: true },
+            { time: "11:00-12:00", course: "Library", type: "Library", isActivity: true },
+            { time: "12:00-1:00", course: "Lunch", type: "Lunch", isLunch: true },
+            { time: "1:00-3:00", course: "Tutorial Session", type: "Tutorial", isActivity: true }
+          ],
+          "Saturday": [
+            { time: "9:00-12:00", course: "PBL/Activity", type: "Activity", isActivity: true }
+          ]
+        }
+      };
+    }
+
+    async function loadCourses() {
+      try {
+        // Sample courses based on department and semester
+        const courses = [
+          { code: "CSE501", name: "Database Management Systems", credits: 4, type: "Theory+Lab", teacher: "Dr. Franklin Y" },
+          { code: "CSE502", name: "Advanced Java Programming", credits: 4, type: "Theory+Lab", teacher: "Dr. Priya K" },
+          { code: "CSE503", name: "Design and Analysis of Algorithms", credits: 3, type: "Theory+Lab", teacher: "Prof. Sharma" },
+          { code: "CSE504", name: "Software Engineering & Project Management", credits: 3, type: "Theory", teacher: "Jovita P.X" },
+          { code: "CSE505", name: "Big Data Analytics", credits: 3, type: "Theory", teacher: "Dr. Novel Q" }
+        ];
+
+        const coursesGrid = document.getElementById('coursesList');
+        coursesGrid.innerHTML = courses.map(course => `
+          <div class="course-card">
+            <div class="course-code">${course.code}</div>
+            <div class="course-name">${course.name}</div>
+            <div class="course-teacher">👨‍🏫 ${course.teacher}</div>
+            <div class="course-meta">
+              <span class="credits">${course.credits} Credits</span>
+              <span class="type">${course.type}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading courses:', error);
+      }
+    }
+
+    async function loadFacultyContacts() {
+      try {
+        const faculty = [
+          { name: "Dr. Franklin Y", email: "franklin@college.edu", phone: "+91 9876543210", department: "CSE" },
+          { name: "Dr. Priya K", email: "priya@college.edu", phone: "+91 9876543211", department: "CSE" },
+          { name: "Prof. Sharma", email: "sharma@college.edu", phone: "+91 9876543212", department: "CSE" }
+        ];
+
+        const contactsList = document.getElementById('facultyContacts');
+        contactsList.innerHTML = faculty.map(teacher => `
+          <div class="contact-item">
+            <div class="contact-name">${teacher.name}</div>
+            <div class="contact-details">
+              <div class="contact-email">📧 ${teacher.email}</div>
+              <div class="contact-phone">📞 ${teacher.phone}</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading faculty contacts:', error);
+      }
+    }
+
+    function renderStudentTimetable(timetable, viewType = 'weekly') {
+      const container = document.getElementById('studentTimetable');
+      
+      if (viewType === 'weekly') {
+        container.innerHTML = renderWeeklyView(timetable);
+      } else if (viewType === 'daily') {
+        container.innerHTML = renderDailyView(timetable);
+      } else {
+        container.innerHTML = renderListView(timetable);
+      }
+    }
+
+    function renderWeeklyView(timetable) {
+      let html = `<div class="weekly-timetable">
+        <div class="timetable-grid weekly-grid">`;
+      
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const timeSlots = [
+        "8:30-9:30", "9:30-10:30", "10:30-11:00", "11:00-12:00", 
+        "12:00-1:00", "1:00-2:00", "2:00-3:00", "3:00-4:00"
+      ];
+      
+      // Header row
+      html += `<div class="timetable-header-row">
+        <div class="time-header">Time</div>`;
+      days.forEach(day => {
+        html += `<div class="day-header">${day}</div>`;
+      });
+      html += `</div>`;
+      
+      // Time slots rows
+      timeSlots.forEach(timeSlot => {
+        html += `<div class="timetable-row">
+          <div class="time-slot">${timeSlot}</div>`;
+        
+        days.forEach(day => {
+          const classes = timetable.days[day]?.filter(cls => cls.time === timeSlot) || [];
+          if (classes.length > 0) {
+            const cls = classes[0];
+            let cellClass = 'timetable-cell';
+            if (cls.isBreak) cellClass += ' break-slot';
+            else if (cls.isLunch) cellClass += ' lunch-slot';
+            else if (cls.isActivity) cellClass += ' activity-slot';
+            else cellClass += ' ' + cls.type.toLowerCase();
+            
+            html += `<div class="${cellClass}">
+              <div class="course-name">${cls.course}</div>`;
+            
+            if (!cls.isBreak && !cls.isLunch) {
+              html += `<div class="course-details">${cls.teacher} | ${cls.room}</div>`;
+            }
+            
+            html += `</div>`;
+          } else {
+            html += `<div class="timetable-cell free-slot">Free</div>`;
+          }
+        });
+        html += `</div>`;
+      });
+      
+      html += `</div>
+        <div class="timetable-legend">
+          <div class="legend-item"><span class="legend-color theory"></span> Theory Class</div>
+          <div class="legend-item"><span class="legend-color lab"></span> Lab Session</div>
+          <div class="legend-item"><span class="legend-color break-slot"></span> Break</div>
+          <div class="legend-item"><span class="legend-color lunch-slot"></span> Lunch</div>
+          <div class="legend-item"><span class="legend-color activity-slot"></span> Activity</div>
+        </div>
+      </div>`;
+      return html;
+    }
+
+    function updateStatistics(timetable) {
+      let totalClasses = 0;
+      let totalHours = 0;
+      let labSessions = 0;
+      const subjects = new Set();
+      
+      Object.values(timetable.days).forEach(classes => {
+        classes.forEach(cls => {
+          if (!cls.isBreak && !cls.isLunch) {
+            totalClasses++;
+            
+            // Calculate hours
+            const timeParts = cls.time.split('-');
+            const start = parseFloat(timeParts[0].replace(':', '.'));
+            const end = parseFloat(timeParts[1].replace(':', '.'));
+            totalHours += (end - start);
+            
+            if (cls.type === 'Lab') labSessions++;
+            if (cls.course && cls.course !== 'Library' && cls.course !== 'Tutorial Session') {
+              subjects.add(cls.course);
+            }
+          }
+        });
+      });
+      
+      document.getElementById('totalClasses').textContent = totalClasses;
+      document.getElementById('totalHours').textContent = totalHours.toFixed(1);
+      document.getElementById('differentSubjects').textContent = subjects.size;
+      document.getElementById('labSessions').textContent = labSessions;
+    }
+
+    function changeViewType() {
+      if (currentTimetable) {
+        const viewType = document.getElementById('viewType').value;
+        renderStudentTimetable(currentTimetable, viewType);
+      }
+    }
+
+    function downloadTimetable() {
+      if (!currentTimetable) {
+        alert('Please load timetable first');
+        return;
+      }
+      const timetableText = JSON.stringify(currentTimetable, null, 2);
+      const blob = new Blob([timetableText], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `timetable-${userData.semester}-${userData.section}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function printTimetable() {
+      window.print();
+    }
+
+    function showTodaySchedule() {
+      document.getElementById('viewType').value = 'daily';
+      if (currentTimetable) {
+        changeViewType();
+      } else {
+        loadTimetable();
+      }
+    }
+
+    function viewAcademicCalendar() {
+      alert('Academic calendar feature would open here');
+    }
+
+    // Make functions globally available
+    window.changeViewType = changeViewType;
+    window.loadTimetable = loadTimetable;
+    window.downloadTimetable = downloadTimetable;
+    window.printTimetable = printTimetable;
+    window.showTodaySchedule = showTodaySchedule;
+    window.viewAcademicCalendar = viewAcademicCalendar;
+  </script>
+</body>
+</html>
